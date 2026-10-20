@@ -169,6 +169,37 @@ class ApplyUndoTests(unittest.TestCase):
             self.assertFalse((root / "Documents").exists())
 
 
+class DescribeTests(unittest.TestCase):
+    """The 150M model echoes instructions sometimes; that must degrade to a preview, not a lie."""
+
+    def test_instruction_echo_falls_back_to_preview(self):
+        with TemporaryDirectory() as tmp, FakeModelServer() as endpoint:
+            root = Path(tmp)
+            note = root / "todo.txt"
+            note.write_text("buy milk\ncall the plumber\n", encoding="utf-8")
+            _Handler.reply = "no preamble"
+            try:
+                line = ss.describe(note, ss.Model(endpoint=endpoint))
+            finally:
+                _Handler.reply = {"folder": "Documents", "rename": "groceries-and-calls.txt",
+                                  "why": "a to-do list"}
+            self.assertEqual(line, "buy milk")
+
+    def test_missing_model_uses_preview(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            note = root / "todo.txt"
+            note.write_text("buy milk\n", encoding="utf-8")
+            self.assertEqual(ss.describe(note, None), "buy milk")
+
+    def test_binary_file_has_no_preview(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            blob = root / "x.bin"
+            blob.write_bytes(b"\x00\x01\x02")
+            self.assertEqual(ss.describe(blob, None), "(no preview)")
+
+
 class NightTests(unittest.TestCase):
     """One file a night. Only provable junk gets binned."""
 

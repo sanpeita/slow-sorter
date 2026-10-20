@@ -146,7 +146,12 @@ class Model:
         finally:
             self.seconds += time.time() - started
         self.calls += 1
-        return " ".join(str(text).split())[:90]
+        line = " ".join(str(text).split())[:90]
+        # 150M は指示文をそのまま返すことがある（実測: "no preamble"）。その場合は失敗扱い。
+        echo = ("preamble", "no quotes", "describe this", "file:", "max 12 words")
+        if not line or any(marker in line.lower() for marker in echo):
+            return ""
+        return line
 
 
 @dataclass
