@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+junk/
+.slow-sorter-trash/
+.slow-sorter-undo.json
