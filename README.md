@@ -108,7 +108,7 @@ The numbers are the reason for the design, not a limitation to apologise for.
 python3 -m unittest discover -s tests
 ```
 
-21 tests: rule mapping, model routing, unusable answers, a dead endpoint, name
+25 tests: rule mapping, model routing, unusable answers, a dead endpoint, name
 sanitising, collisions, dry-run, and the nightly bin/keep/undo path.
 
 ## License
