@@ -280,6 +280,20 @@ class NightTests(unittest.TestCase):
             self._old(inside)
             self.assertEqual(ss.night_candidates(root, 3.0), [])
 
+    def test_unprovable_file_does_not_block_the_queue(self):
+        """昨夜keepしたファイルで永久に詰まらない。翌晩は次の候補へ進む。"""
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            keep = root / "thesis.md"
+            keep.write_text("something irreplaceable", encoding="utf-8")
+            junk = root / "render.tmp"
+            junk.write_text("half a render", encoding="utf-8")
+            self._old(keep, 30)      # いちばん古い＝最初に見られるが捨てられない
+            self._old(junk, 10)
+            ss.night(root, None, 3.0, 1)
+            self.assertTrue(keep.exists())
+            self.assertFalse(junk.exists())          # 詰まらずに次へ進んでいる
+
     def test_max_limits_how_many_are_touched(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)

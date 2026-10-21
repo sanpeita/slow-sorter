@@ -372,20 +372,38 @@ def describe(path: Path, model: "Model | None") -> str:
 
 
 def night(root: Path, model: "Model | None", quiet_days: float, limit: int) -> int:
-    picked = night_candidates(root, quiet_days)[:limit]
-    if not picked:
+    """Walk the oldest files in order and bin the first `limit` provable ones.
+
+    A file that cannot be proven junk never blocks the queue: it is reported once and
+    the next night starts again from the top of the list.
+    """
+    candidates = night_candidates(root, quiet_days)
+    if not candidates:
         print(f"nothing untouched for {quiet_days:g} days. see you tomorrow.")
         return 0
-    for path in picked:
-        line = describe(path, model)
+
+    binned = 0
+    looked = 0
+    explained_kept = 0
+    for path in candidates[:20]:
+        if binned >= limit:
+            break
         reason = why_disposable(path, root)
-        print(path.name)
-        print(f"  {line}")
-        if reason:
-            landed = bin_to_trash(path, root)
-            print(f"  -> binned ({reason}) -> {landed.relative_to(root)}")
-        else:
-            print("  -> kept (cannot prove it is safe to bin)")
+        if reason is None:
+            looked += 1
+            if explained_kept < 1:          # 1行だけ「何に見えたか」を残す
+                print(f"{path.name}\n  {describe(path, model)}\n"
+                      f"  -> kept (cannot prove it is safe to bin)")
+                explained_kept += 1
+            continue
+        looked += 1
+        line = describe(path, model)
+        landed = bin_to_trash(path, root)
+        binned += 1
+        print(f"{path.name}\n  {line}\n  -> binned ({reason}) -> {landed.relative_to(root)}")
+
+    if binned == 0:
+        print(f"looked at {looked} old file(s), binned nothing. slow and steady.")
     return 0
 
 
